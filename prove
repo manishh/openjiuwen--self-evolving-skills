@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Usage: ./prove [--repeat N]
+# Builds a venv, installs pinned JiuwenSwarm, and runs the proof harness.
+# Every repeat gets a brand-new isolated JiuwenSwarm home (never ~/.jiuwenswarm).
+set -euo pipefail
+cd "$(dirname "$0")"
+
+# Optional convenience: load .env (git-ignored) if present. Env vars win otherwise.
+if [ -f .env ]; then set -a; . ./.env; set +a; fi
+if [ -z "${OPENAI_API_KEY:-}" ] && [ -z "${API_KEY:-}" ]; then
+  echo "Set OPENAI_API_KEY in the environment (or in .env)." >&2; exit 2
+fi
+
+PY=""
+for c in python3.12 python3.13 python3.11 python3; do
+  if command -v "$c" >/dev/null 2>&1 && "$c" -c 'import sys; sys.exit(0 if (3,11)<=sys.version_info[:2]<=(3,13) else 1)'; then PY="$c"; break; fi
+done
+[ -n "$PY" ] || { echo "Need Python 3.11-3.13" >&2; exit 2; }
+
+VENV="${PROVE_VENV:-.venv}"
+[ -x "$VENV/bin/python" ] || "$PY" -m venv "$VENV"
+"$VENV/bin/python" -m pip install -q --disable-pip-version-check -r requirements.txt
+
+export PROOF_OUT="${PROOF_OUT:-$PWD/proof-out}"
+exec "$VENV/bin/python" harness/prove.py "$@"

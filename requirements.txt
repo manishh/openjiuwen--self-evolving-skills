@@ -1,0 +1,3 @@
+# JiuwenSwarm is published on PyPI as `workswarm` (the `jiuwenswarm` name stops at 0.2.3).
+# It installs the jiuwenswarm-init / jiuwenswarm-process commands.
+workswarm==0.2.7
